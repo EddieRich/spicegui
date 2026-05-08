@@ -49,3 +49,13 @@ Rect get_canvas_client_bounds()
 	bounds.size.height = (int)(viewport.canvas.height * viewport.scale);
 	return bounds;
 }
+
+Rect rectf_to_client(RectF rectf)
+{
+	Rect r;
+	r.point.x = viewport.client_offset.x + rectf.point.x * viewport.scale;
+	r.point.y = viewport.client_offset.y + rectf.point.y * viewport.scale;
+	r.size.width = (int)(rectf.size.width * viewport.scale);
+	r.size.height = (int)(rectf.size.height * viewport.scale);
+	return r;
+}

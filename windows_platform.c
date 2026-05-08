@@ -5,19 +5,33 @@
 
 #define CLASSNAME "WindowClassName"
 static HWND hwnd;
-static HBRUSH background = 0;
-static HBRUSH canvas = 0;
+static HDC hdc;
+
+void FillRectangle(Rect rect, unsigned int color)
+{
+	RECT r;
+	r.left = rect.point.x;
+	r.top = rect.point.y;
+	r.right = rect.point.x + rect.size.width;
+	r.bottom = rect.point.y + rect.size.height;
+	HBRUSH brush = CreateSolidBrush(color);
+	FillRect(hdc, &r, brush);
+	DeleteObject(brush);
+}
+
+void DrawRectangle(Rect rect, unsigned int color)
+{
+	HPEN pen = CreatePen(PS_SOLID, 1, color);
+	HGDIOBJ oldpen = SelectObject(hdc, pen);
+	Rectangle(hdc, rect.point.x, rect.point.y, rect.point.x + rect.size.width, rect.point.y + rect.size.height);
+	SelectObject(hdc, oldpen);
+	DeleteObject(pen);
+}
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
 	if (msg == WM_DESTROY)
 	{
-		if (background)
-			DeleteObject(background);
-
-		if (canvas)
-			DeleteObject(canvas);
-
 		PostQuitMessage(0);
 		return 1;
 	}
@@ -34,14 +48,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	if (msg == WM_PAINT)
 	{
 		PAINTSTRUCT ps;
-	  HDC hdc = BeginPaint(hwnd, &ps);
-		Rect r = get_canvas_client_bounds();
-		RECT rect;
-		rect.left = r.point.x;
-		rect.top = r.point.y;
-		rect.right = r.point.x + r.size.width;
-		rect.bottom = r.point.y + r.size.height;
-		FillRect(hdc, &rect, canvas);
+	  hdc = BeginPaint(hwnd, &ps);
+		FillRectangle(get_canvas_client_bounds(), 0xFFFFFF);
+		RectF foo;
+		foo.point.x = 2.0;
+		foo.point.y = 2.0;
+		foo.size.width = 1.0;
+		foo.size.height = 1.0;
+		DrawRectangle(rectf_to_client(foo), 0xff0000);
     EndPaint(hwnd, &ps);
 		return 1;
 	}
@@ -86,9 +100,8 @@ int main()
 	HINSTANCE instance = GetModuleHandle(0);
 	WNDCLASS wc = {0};
 
-	background = CreateSolidBrush(RGB(48, 48, 48));
 	wc.hInstance = instance;
-	wc.hbrBackground = background;
+	wc.hbrBackground = GetStockObject(DKGRAY_BRUSH);
 	wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wc.lpszClassName = CLASSNAME;
@@ -105,8 +118,8 @@ int main()
 		return -1;
 	}
 
-	canvas = CreateSolidBrush(RGB(255,255,255));
-	set_canvas_size(6.0, 6.0);
+	hdc = GetWindowDC(hwnd);
+	set_canvas_size(5, 5);
 	ShowWindow(hwnd, SW_NORMAL);
 
 	MSG msg = {0};

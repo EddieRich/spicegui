@@ -15,5 +15,6 @@ typedef struct viewport_s
 int set_viewport_window(int width, int height);
 int set_canvas_size(float width, float height);
 Rect get_canvas_client_bounds();
+Rect rectf_to_client(RectF rectf);
 
 #endif // __VIEWPORT__

@@ -5,6 +5,9 @@
  * This is everything common to both platforms
  */
 
-void Line(float x1, float y1, float x2, float y2, float thickness, unsigned int color);
+#include "types.h"
+
+void FillRectangle(Rect rect, unsigned int color);
+void DrawRectangle(Rect rect, unsigned int color);
 
 #endif // __PLATFORM__

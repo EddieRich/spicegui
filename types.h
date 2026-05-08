@@ -1,6 +1,8 @@
 #ifndef __TYPES__
 #define __TYPES__
 
+#pragma pack(1)
+
 typedef struct point_s
 {
 	int x;
@@ -36,5 +38,7 @@ typedef struct rectf_s
 	PointF point;
 	SizeF size;
 } RectF;
+
+#pragma pack()
 
 #endif // __TYPES__
