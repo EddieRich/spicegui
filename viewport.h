@@ -1,8 +1,6 @@
 #ifndef __VIEWPORT__
 #define __VIEWPORT__
 
-#include "types.h"
-
 typedef struct viewport_s
 {
 	Size client;

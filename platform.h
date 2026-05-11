@@ -5,9 +5,20 @@
  * This is everything common to both platforms
  */
 
-#include "types.h"
+typedef enum eColor {
+	NONE,
+	BLACK,
+	WHITE,
+	RED,
+	YELLOW,
+	GREEN,
+	CYAN,
+	BLUE,
+	PURPLE,
+	COLOR_COUNT
+} Color;
 
-void FillRectangle(Rect rect, unsigned int color);
-void DrawRectangle(Rect rect, unsigned int color);
+void FillRectangle(Rect rect, Color color);
+void DrawRectangle(Rect rect, Color color);
 
 #endif // __PLATFORM__

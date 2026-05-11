@@ -1,3 +1,4 @@
+#include "types.h"
 #include "viewport.h"
 
 static t_Viewport viewport = {0};

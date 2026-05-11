@@ -1,31 +1,28 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
+#include "types.h"
+#include "platform.h"
 #include "viewport.h"
 
 #define CLASSNAME "WindowClassName"
 static HWND hwnd;
 static HDC hdc;
+static HBRUSH brush[COLOR_COUNT];
+static HPEN pen[COLOR_COUNT];
 
-void FillRectangle(Rect rect, unsigned int color)
+void FillRectangle(Rect rect, Color color)
 {
-	RECT r;
-	r.left = rect.point.x;
-	r.top = rect.point.y;
-	r.right = rect.point.x + rect.size.width;
-	r.bottom = rect.point.y + rect.size.height;
-	HBRUSH brush = CreateSolidBrush(color);
-	FillRect(hdc, &r, brush);
-	DeleteObject(brush);
+	SelectObject(hdc, pen[NONE]);
+	SelectObject(hdc, brush[color]);
+	Rectangle(hdc, rect.point.x, rect.point.y, rect.point.x + rect.size.width, rect.point.y + rect.size.height);
+	SelectObject(hdc, brush[NONE]);
 }
 
-void DrawRectangle(Rect rect, unsigned int color)
+void DrawRectangle(Rect rect, Color color)
 {
-	HPEN pen = CreatePen(PS_SOLID, 1, color);
-	HGDIOBJ oldpen = SelectObject(hdc, pen);
+	SelectObject(hdc, pen[color]);
 	Rectangle(hdc, rect.point.x, rect.point.y, rect.point.x + rect.size.width, rect.point.y + rect.size.height);
-	SelectObject(hdc, oldpen);
-	DeleteObject(pen);
 }
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -49,13 +46,19 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	{
 		PAINTSTRUCT ps;
 	  hdc = BeginPaint(hwnd, &ps);
-		FillRectangle(get_canvas_client_bounds(), 0xFFFFFF);
+		HGDIOBJ oldbrush = SelectObject(hdc, brush[NONE]);
+		HGDIOBJ oldpen = SelectObject(hdc, pen[NONE]);
+
+		FillRectangle(get_canvas_client_bounds(), WHITE);
 		RectF foo;
 		foo.point.x = 2.0;
 		foo.point.y = 2.0;
 		foo.size.width = 1.0;
 		foo.size.height = 1.0;
-		DrawRectangle(rectf_to_client(foo), 0xff0000);
+		DrawRectangle(rectf_to_client(foo), BLACK);
+
+		SelectObject(hdc, oldbrush);
+		SelectObject(hdc, oldpen);
     EndPaint(hwnd, &ps);
 		return 1;
 	}
@@ -95,6 +98,37 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
+void initGDI(void)
+{
+	brush[NONE] = GetStockObject(NULL_BRUSH);
+	brush[BLACK] = GetStockObject(BLACK_BRUSH);
+	brush[WHITE] = GetStockObject(WHITE_BRUSH);
+	brush[RED] = CreateSolidBrush(RGB(255,0,0));
+	brush[YELLOW] = CreateSolidBrush(RGB(255,255,0));
+	brush[GREEN] = CreateSolidBrush(RGB(0,255,0));
+	brush[CYAN] = CreateSolidBrush(RGB(0,255,255));
+	brush[BLUE] = CreateSolidBrush(RGB(0,0,255));
+	brush[PURPLE] = CreateSolidBrush(RGB(255,0,255));
+	pen[NONE] = GetStockObject(NULL_PEN);
+	pen[BLACK] = GetStockObject(BLACK_PEN);
+	pen[WHITE] = GetStockObject(WHITE_PEN);
+	pen[RED] = CreatePen(PS_SOLID, 1, RGB(255,0,0));
+	pen[YELLOW] = CreatePen(PS_SOLID, 1, RGB(255,255,0));
+	pen[GREEN] = CreatePen(PS_SOLID, 1, RGB(0,255,0));
+	pen[CYAN] = CreatePen(PS_SOLID, 1, RGB(0,255,255));
+	pen[BLUE] = CreatePen(PS_SOLID, 1, RGB(0,0,255));
+	pen[PURPLE] = CreatePen(PS_SOLID, 1, RGB(255,0,255));
+}
+
+void releaseGDI(void)
+{
+	for (int i = RED; i < COLOR_COUNT; i++)
+	{
+		DeleteObject(brush[i]);
+		DeleteObject(pen[i]);
+	}
+}
+
 int main()
 {
 	HINSTANCE instance = GetModuleHandle(0);
@@ -118,7 +152,7 @@ int main()
 		return -1;
 	}
 
-	hdc = GetWindowDC(hwnd);
+	initGDI();
 	set_canvas_size(5, 5);
 	ShowWindow(hwnd, SW_NORMAL);
 
@@ -129,5 +163,6 @@ int main()
 		DispatchMessage(&msg);
 	}
 
+	releaseGDI();
 	return 0;
 }
