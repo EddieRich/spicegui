@@ -1,39 +1,89 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <windowsx.h>
+#include <math.h>
 
-#include "types.h"
 #include "platform.h"
 #include "viewport.h"
 
 #define CLASSNAME "WindowClassName"
 static HWND hwnd;
 static HDC hdc;
-static HBRUSH brush[COLOR_COUNT];
-static HPEN pen[COLOR_COUNT];
+static HPEN pen[3];
 
-void FillRectangle(Rect rect, Color color)
+void FillRectangle(float left, float top, float right, float bottom)
 {
-	SelectObject(hdc, pen[NONE]);
-	SelectObject(hdc, brush[color]);
-	Rectangle(hdc, rect.point.x, rect.point.y, rect.point.x + rect.size.width, rect.point.y + rect.size.height);
-	SelectObject(hdc, brush[NONE]);
+	Rectangle(hdc, client_x(left), client_y(top), client_x(right), client_y(bottom));
 }
 
-void DrawRectangle(Rect rect, Color color)
+void DrawRectangle(float left, float top, float right, float bottom)
 {
-	SelectObject(hdc, pen[color]);
-	Rectangle(hdc, rect.point.x, rect.point.y, rect.point.x + rect.size.width, rect.point.y + rect.size.height);
+	Rectangle(hdc, client_x(left), client_y(top), client_x(right), client_y(bottom));
+}
+
+// void FillCircle(float center_x, float center_y, float radius, Color color)
+// {
+// 	SelectObject(hdc, pen[NONE]);
+// 	SelectObject(hdc, brush[color]);
+// 	Ellipse(hdc, client_x(center_x - radius), client_y(center_y - radius), client_x(center_x + radius), client_y(center_y + radius));
+// 	SelectObject(hdc, brush[NONE]);
+// }
+
+void DrawCircle(float center_x, float center_y, float radius)
+{
+	Ellipse(hdc, client_x(center_x - radius), client_y(center_y - radius), client_x(center_x + radius), client_y(center_y + radius));
+}
+
+void DrawLine(float x1, float y1, float x2, float y2)
+{
+	MoveToEx(hdc, client_x(x1), client_y(y1), NULL);
+	LineTo(hdc, client_x(x2), client_y(y2));
+}
+
+void DrawArc(float center_x, float center_y, float a, float b, float start_angle, float end_angle)
+{
+	int x1 = client_x(center_x - a / 2.0f);
+	int y1 = client_y(center_y - b / 2.0f);
+	int x2 = client_x(center_x + a / 2.0f);
+	int y2 = client_y(center_y + b / 2.0f);
+	float fsin, fcos;
+	sincosf(start_angle, &fsin, &fcos);
+	int x3 = client_x(center_x + fcos * a);
+	int y3 = client_y(center_y - fsin * b);
+	sincosf(end_angle, &fsin, &fcos);
+	int x4 = client_x(center_x + fcos * a);
+	int y4 = client_y(center_y - fsin * b);
+
+	Arc(hdc, x1, y1, x2, y2, x3, y3, x4, y4);
 }
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-	if (msg == WM_DESTROY)
+	if (msg == WM_PAINT)
 	{
-		PostQuitMessage(0);
+		PAINTSTRUCT ps;
+		hdc = BeginPaint(hwnd, &ps);
+		HGDIOBJ oldpen = SelectObject(hdc, GetStockObject(NULL_PEN));
+		HGDIOBJ oldbrush = SelectObject(hdc, GetStockObject(WHITE_BRUSH));
+		FillRectangle(0.0, 0.0, canvas_width(), canvas_height());
+		SelectObject(hdc, GetStockObject(NULL_BRUSH));
+
+		SelectObject(hdc, pen[PT_THIN]);
+		DrawRectangle(2.0, 2.0, 3.0, 3.0);
+		DrawCircle(2.5, 2.5, 0.25);
+		DrawLine(1.0, 1.0, 9.5, 1.0);
+		DrawArc(7.0, 3.0, 2.0, 1.0, deg2rad(45), deg2rad(135));
+
+		DrawLine(6.8, 6.9, 7.2, 6.9);
+		SelectObject(hdc, pen[PT_NORMAL]);
+		DrawArc(7.0, 8.0, 1.0, 2.0, deg2rad(70), deg2rad(110));
+
+		SelectObject(hdc, oldbrush);
+		SelectObject(hdc, oldpen);
+		EndPaint(hwnd, &ps);
 		return 1;
 	}
-
-	if (msg == WM_SIZE)
+	else if (msg == WM_SIZE)
 	{
 		if (set_viewport_window(LOWORD(lparam), HIWORD(lparam)))
 		{
@@ -41,25 +91,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 			return 1;
 		}
 	}
-
-	if (msg == WM_PAINT)
+	else if (msg == WM_DESTROY)
 	{
-		PAINTSTRUCT ps;
-	  hdc = BeginPaint(hwnd, &ps);
-		HGDIOBJ oldbrush = SelectObject(hdc, brush[NONE]);
-		HGDIOBJ oldpen = SelectObject(hdc, pen[NONE]);
-
-		FillRectangle(get_canvas_client_bounds(), WHITE);
-		RectF foo;
-		foo.point.x = 2.0;
-		foo.point.y = 2.0;
-		foo.size.width = 1.0;
-		foo.size.height = 1.0;
-		DrawRectangle(rectf_to_client(foo), BLACK);
-
-		SelectObject(hdc, oldbrush);
-		SelectObject(hdc, oldpen);
-    EndPaint(hwnd, &ps);
+		PostQuitMessage(0);
 		return 1;
 	}
 
@@ -73,10 +107,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	// case WM_RBUTTONUP:
 	// case WM_MBUTTONUP:
 	// 	handleMouseRelease(0, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam), GET_KEYSTATE_WPARAM(wparam));
-	// 	break;
-
-	// case WM_MOUSEMOVE:
-	// 	handleMouseMove(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam), GET_KEYSTATE_WPARAM(wparam));
 	// 	break;
 
 	// case WM_MOUSEWHEEL:
@@ -100,33 +130,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 
 void initGDI(void)
 {
-	brush[NONE] = GetStockObject(NULL_BRUSH);
-	brush[BLACK] = GetStockObject(BLACK_BRUSH);
-	brush[WHITE] = GetStockObject(WHITE_BRUSH);
-	brush[RED] = CreateSolidBrush(RGB(255,0,0));
-	brush[YELLOW] = CreateSolidBrush(RGB(255,255,0));
-	brush[GREEN] = CreateSolidBrush(RGB(0,255,0));
-	brush[CYAN] = CreateSolidBrush(RGB(0,255,255));
-	brush[BLUE] = CreateSolidBrush(RGB(0,0,255));
-	brush[PURPLE] = CreateSolidBrush(RGB(255,0,255));
-	pen[NONE] = GetStockObject(NULL_PEN);
-	pen[BLACK] = GetStockObject(BLACK_PEN);
-	pen[WHITE] = GetStockObject(WHITE_PEN);
-	pen[RED] = CreatePen(PS_SOLID, 1, RGB(255,0,0));
-	pen[YELLOW] = CreatePen(PS_SOLID, 1, RGB(255,255,0));
-	pen[GREEN] = CreatePen(PS_SOLID, 1, RGB(0,255,0));
-	pen[CYAN] = CreatePen(PS_SOLID, 1, RGB(0,255,255));
-	pen[BLUE] = CreatePen(PS_SOLID, 1, RGB(0,0,255));
-	pen[PURPLE] = CreatePen(PS_SOLID, 1, RGB(255,0,255));
+	pen[PT_THIN] = CreatePen(PS_SOLID, 1, RGB(0,0,0));
+	pen[PT_NORMAL] = CreatePen(PS_SOLID, 3, RGB(0,0,0));
+	pen[PT_THICK] = CreatePen(PS_SOLID, 5, RGB(0,0,0));
 }
 
 void releaseGDI(void)
 {
-	for (int i = RED; i < COLOR_COUNT; i++)
-	{
-		DeleteObject(brush[i]);
+	for (int i = 0; i < 3; i++)
 		DeleteObject(pen[i]);
-	}
 }
 
 int main()
@@ -153,7 +165,7 @@ int main()
 	}
 
 	initGDI();
-	set_canvas_size(5, 5);
+	set_canvas_size(10.5, 8.0);
 	ShowWindow(hwnd, SW_NORMAL);
 
 	MSG msg = {0};

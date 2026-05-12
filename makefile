@@ -31,7 +31,7 @@ ifeq ($(OS),Windows_NT)
 	SRC=windows_platform.c
 	EXE=spicegui.exe
 	LIBS=$(addprefix -l, gdi32)
-# 	RM=del
+ 	RM=\msys64\usr\bin\rm.exe -f
 else
 	SRC=linux_platform.c
 	EXE=spicegui
@@ -56,7 +56,7 @@ release: clean $(EXE)
 .NOTPARALLEL: release
 
 clean:
-	rm $(OBJ) $(DEP) $(EXE)
+	$(RM) $(OBJ) $(DEP) $(EXE)
 
 #install: release
 #	cp $(EXE) $(TARGET)/bin
