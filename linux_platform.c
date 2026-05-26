@@ -1,9 +1,33 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
+#include "platform.h"
+#include "viewport.h"
+
 Display* display;
 Window window;
+GC gc;
 Atom atom_wmdw;
+
+void FillRectangle(float left, float top, float right, float bottom)
+{
+	XFillRectangle(display, window, gc, client_x(left), client_y(top), client_x(right) - client_x(left), client_y(bottom) - client_y(top));
+}
+
+void DrawRectangle(float left, float top, float right, float bottom)
+{
+	XDrawRectangle(display, window, gc, client_x(left), client_y(top), client_x(right) - client_x(left), client_y(bottom) - client_y(top));
+}
+
+void DrawCircle(float center_x, float center_y, float radius)
+{
+	XDrawArc(display, window, gc, client_x(center_x - radius), client_y(center_y - radius), client_size(radius * 2), client_size(radius * 2), 0, 360 * 64);
+}
+
+void DrawLine(float x1, float y1, float x2, float y2)
+{
+	XDrawLine(display, window, gc, client_x(x1), client_y(y1), client_x(x2), client_y(y2));
+}
 
 void create_window(int width, int height, const char* title)
 {
@@ -19,8 +43,8 @@ void create_window(int width, int height, const char* title)
 	int x = (display_width - width) / 2;
 	int y = (display_height - height) / 2;
 
-	winatt.background_pixel = 0x00003000;
-	winatt.event_mask = ButtonPressMask | ButtonReleaseMask | PointerMotionMask | KeyPressMask | KeyReleaseMask /* | StructureNotifyMask | ExposureMask*/;
+	winatt.background_pixel = 0x333333UL;
+	winatt.event_mask = ButtonPressMask | ButtonReleaseMask | PointerMotionMask | KeyPressMask | KeyReleaseMask | StructureNotifyMask | ExposureMask;
 	unsigned long valuemask = CWBackPixel | CWEventMask;
 	window = XCreateWindow(display, RootWindow(display, screen), x, y, width, height, 0, DefaultDepth(display, screen), InputOutput, DefaultVisual(display, screen), valuemask, &winatt);
 
@@ -36,6 +60,7 @@ void create_window(int width, int height, const char* title)
 	XSetWMName(display, window, &windowName);
 	XMapWindow(display, window);
 	XFlush(display);
+	gc = DefaultGC(display, screen);
 }
 
 int update_window()
@@ -44,7 +69,24 @@ int update_window()
 	XEvent event;
 	XNextEvent(display, &event);
 
-	if (event.type == ClientMessage)
+	if (event.type == Expose)
+	{
+		XSetForeground(display, gc, 0xFFFFFF);
+		FillRectangle(0.0, 0.0, canvas_width(), canvas_height());
+		XSetForeground(display, gc, 0);
+		DrawRectangle(2.0, 2.0, 3.0, 3.0);
+		DrawCircle(2.5, 2.5, 0.25);
+		DrawLine(1.0, 1.0, 9.5, 1.0);
+		return 1;
+	}
+	else if (event.type == ConfigureNotify)
+	{
+		set_viewport_window(event.xconfigure.width, event.xconfigure.height);
+		set_canvas_size(10.5, 8.0);
+
+		return 1;
+	}
+	else if (event.type == ClientMessage)
 	{
 		if (event.xclient.data.l[0] == (long)atom_wmdw)
 			return 0;
@@ -79,18 +121,6 @@ int update_window()
 	// 	XLookupString(&event.xkey, NULL, 0, &ks, NULL);
 	// 	handleKeyRelease(ks, event.xkey.state);
 	// 	break;
-
-	// case ConfigureNotify:
-	// 	printf("Configure Notify Event: %d %d %d x %d\n", event.xconfigure.x, event.xconfigure.y, event.xconfigure.width, event.xconfigure.height);
-	// 	break;
-
-	// case Expose:
-	// 	printf("Expose Event: Count = %d\n", event.xexpose.count);
-	// 	break;
-
-	// default:
-	// 	break;
-	// }
 
 	return 1;
 }
