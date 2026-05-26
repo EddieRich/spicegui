@@ -81,20 +81,35 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		SelectObject(hdc, oldbrush);
 		SelectObject(hdc, oldpen);
 		EndPaint(hwnd, &ps);
-		return 1;
+		return 1LL;
+	}
+	else if (msg == WM_KEYUP)
+	{
+		if (wparam == VK_ADD)
+		{
+			POINT cursor;
+			GetCursorPos(&cursor);
+			ScreenToClient(hwnd, &cursor);
+			if (point_in_window(cursor.x, cursor.y))
+			{
+				zoom_in_at(cursor.x, cursor.y);
+				InvalidateRect(hwnd, NULL, TRUE);
+				return 1LL;
+			}
+		}
 	}
 	else if (msg == WM_SIZE)
 	{
 		if (set_viewport_window(LOWORD(lparam), HIWORD(lparam)))
 		{
 			InvalidateRect(hwnd, NULL, TRUE);
-			return 1;
+			return 1LL;
 		}
 	}
 	else if (msg == WM_DESTROY)
 	{
 		PostQuitMessage(0);
-		return 1;
+		return 1LL;
 	}
 
 	// case WM_LBUTTONDOWN:

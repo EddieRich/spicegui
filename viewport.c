@@ -1,6 +1,7 @@
 #include "viewport.h"
 
 static t_Viewport viewport = {0};
+static const float zoom_scale = 1.4142135;
 
 static void calculate_layout(void)
 {
@@ -28,7 +29,7 @@ int set_canvas_size(float width, float height)
 {
 	viewport.canvas_width = width;
 	viewport.canvas_height = height;
-	if (viewport.client_width && viewport.client_height && viewport.zoom < 0.999)
+	if (viewport.client_width && viewport.client_height && viewport.zoom < 0.5)
 	{
 		viewport.zoom = 1.0;
 		calculate_layout();
@@ -61,4 +62,17 @@ int client_y(float y)
 int client_size(float sz)
 {
 	return sz * viewport.scale;
+}
+
+int point_in_window(int x, int y)
+{
+	return (x >= 0 && y >= 0 && x < viewport.client_width && y < viewport.client_height);
+}
+
+void zoom_in_at(int cursor_x, int cursor_y)
+{
+	(void)cursor_x;
+	(void)cursor_y;
+	viewport.zoom *= zoom_scale;
+	calculate_layout();
 }
