@@ -1,11 +1,11 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-Display *display;
+Display* display;
 Window window;
 Atom atom_wmdw;
 
-void create_window(int width, int height, const char *title)
+void create_window(int width, int height, const char* title)
 {
 	XSetWindowAttributes winatt;
 	XSizeHints wmsize;
@@ -22,11 +22,7 @@ void create_window(int width, int height, const char *title)
 	winatt.background_pixel = 0x00003000;
 	winatt.event_mask = ButtonPressMask | ButtonReleaseMask | PointerMotionMask | KeyPressMask | KeyReleaseMask /* | StructureNotifyMask | ExposureMask*/;
 	unsigned long valuemask = CWBackPixel | CWEventMask;
-	window = XCreateWindow(display, RootWindow(display, screen),
-												 x, y, width, height, 0,
-												 DefaultDepth(display, screen), InputOutput,
-												 DefaultVisual(display, screen),
-												 valuemask, &winatt);
+	window = XCreateWindow(display, RootWindow(display, screen), x, y, width, height, 0, DefaultDepth(display, screen), InputOutput, DefaultVisual(display, screen), valuemask, &winatt);
 
 	atom_wmdw = XInternAtom(display, "WM_DELETE_WINDOW", False);
 	XSetWMProtocols(display, window, &atom_wmdw, 1);
@@ -36,7 +32,7 @@ void create_window(int width, int height, const char *title)
 	wmhints.initial_state = NormalState;
 	wmhints.flags = StateHint;
 	XSetWMHints(display, window, &wmhints);
-	XStringListToTextProperty((char **)&title, 1, &windowName);
+	XStringListToTextProperty((char**)&title, 1, &windowName);
 	XSetWMName(display, window, &windowName);
 	XMapWindow(display, window);
 	XFlush(display);
@@ -101,10 +97,9 @@ int update_window()
 
 int main()
 {
-	if (!platform_create_window(800, 600, "Cross Platform Window"))
-		return -1;
+	create_window(800, 600, "Spice GUI");
 
-	while (update_window)
+	while (update_window())
 	{
 	}
 

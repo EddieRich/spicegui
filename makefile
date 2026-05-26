@@ -35,7 +35,7 @@ ifeq ($(OS),Windows_NT)
 else
 	SRC=linux_platform.c
 	EXE=spicegui
-	LIBS=$(addprefix -l,)
+	LIBS=$(addprefix -l, X11)
 #RM is predefined as RM = rm -f
 endif
 
