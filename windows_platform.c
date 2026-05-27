@@ -92,6 +92,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		HGDIOBJ oldbrush = SelectObject(hdc, GetStockObject(WHITE_BRUSH));
 		FillRectangle(0.0, 0.0, canvas_width(), canvas_height());
 		SelectObject(hdc, GetStockObject(NULL_BRUSH));
+		SelectObject(hdc, pen[PT_THIN]);
 
 		DrawRectangle(2.0, 2.0, 3.0, 3.0, PT_THIN);
 		DrawCircle(2.5, 2.5, 0.25, PT_NORMAL);
