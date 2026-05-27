@@ -1,32 +1,71 @@
+#include <X11/X.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
 #include "platform.h"
 #include "viewport.h"
 
-Display* display;
-Window window;
-GC gc;
-Atom atom_wmdw;
+static Display* display;
+static Window window;
+static GC gc;
+static Atom atom_wmdw;
+static PenThickness last_pt = PT_THIN;
 
 void FillRectangle(float left, float top, float right, float bottom)
 {
 	XFillRectangle(display, window, gc, client_x(left), client_y(top), client_x(right) - client_x(left), client_y(bottom) - client_y(top));
 }
 
-void DrawRectangle(float left, float top, float right, float bottom)
+void DrawRectangle(float left, float top, float right, float bottom, PenThickness pt)
 {
+	if (pt != last_pt)
+	{
+		last_pt = pt;
+		XSetLineAttributes(display, gc, pt * 2 + 1, LineSolid, CapRound, JoinRound);
+	}
+
 	XDrawRectangle(display, window, gc, client_x(left), client_y(top), client_x(right) - client_x(left), client_y(bottom) - client_y(top));
 }
 
-void DrawCircle(float center_x, float center_y, float radius)
+void DrawCircle(float center_x, float center_y, float radius, PenThickness pt)
 {
+	if (pt != last_pt)
+	{
+		last_pt = pt;
+		XSetLineAttributes(display, gc, pt * 2 + 1, LineSolid, CapRound, JoinRound);
+	}
+
 	XDrawArc(display, window, gc, client_x(center_x - radius), client_y(center_y - radius), client_size(radius * 2), client_size(radius * 2), 0, 360 * 64);
 }
 
-void DrawLine(float x1, float y1, float x2, float y2)
+void DrawLine(float x1, float y1, float x2, float y2, PenThickness pt)
 {
+	if (pt != last_pt)
+	{
+		last_pt = pt;
+		XSetLineAttributes(display, gc, pt * 2 + 1, LineSolid, CapRound, JoinRound);
+	}
+
 	XDrawLine(display, window, gc, client_x(x1), client_y(y1), client_x(x2), client_y(y2));
+}
+
+void DrawArc(float center_x, float center_y, float a, float b, float start_angle, float end_angle, PenThickness pt)
+{
+	int x1 = client_x(center_x - a / 2.0f);
+	int y1 = client_y(center_y - b / 2.0f);
+	int x2 = client_x(center_x + a / 2.0f);
+	int y2 = client_y(center_y + b / 2.0f);
+	int start = (int)(start_angle * 64);
+	int sweep = (int)((end_angle - start_angle) * 64);
+
+
+	if (pt != last_pt)
+	{
+		last_pt = pt;
+		XSetLineAttributes(display, gc, pt * 2 + 1, LineSolid, CapRound, JoinRound);
+	}
+
+	XDrawArc(display, window, gc, x1, y1, x2 - x1, y2 - y1, start, sweep);
 }
 
 void create_window(int width, int height, const char* title)
@@ -74,9 +113,10 @@ int update_window()
 		XSetForeground(display, gc, 0xFFFFFF);
 		FillRectangle(0.0, 0.0, canvas_width(), canvas_height());
 		XSetForeground(display, gc, 0);
-		DrawRectangle(2.0, 2.0, 3.0, 3.0);
-		DrawCircle(2.5, 2.5, 0.25);
-		DrawLine(1.0, 1.0, 9.5, 1.0);
+		DrawRectangle(2.0, 2.0, 3.0, 3.0, PT_THIN);
+		DrawCircle(2.5, 2.5, 0.25, PT_NORMAL);
+		DrawLine(1.0, 1.0, 9.5, 1.0, PT_THICK);
+		DrawArc(5, 5, 2, 2, 45, 135, PT_NORMAL);
 		return 1;
 	}
 	else if (event.type == ConfigureNotify)
