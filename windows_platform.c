@@ -5,6 +5,7 @@
 
 #include "platform.h"
 #include "viewport.h"
+#include "schematic.h"
 
 #define CLASSNAME "WindowClassName"
 static HWND hwnd;
@@ -94,13 +95,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		SelectObject(hdc, GetStockObject(NULL_BRUSH));
 		SelectObject(hdc, pen[PT_THIN]);
 
-		DrawRectangle(2.0, 2.0, 3.0, 3.0, PT_THIN);
-		DrawCircle(2.5, 2.5, 0.25, PT_NORMAL);
-		DrawLine(1.0, 1.0, 9.5, 1.0, PT_THICK);
-		DrawArc(7.0, 3.0, 2.0, 1.0, deg2rad(45), deg2rad(135), PT_NORMAL);
-
-		DrawLine(6.8, 6.9, 7.2, 6.9, PT_THIN);
-		DrawArc(7.0, 8.0, 1.0, 2.0, deg2rad(70), deg2rad(110), PT_THIN);
+		render_schematic();
 
 		SelectObject(hdc, oldbrush);
 		SelectObject(hdc, oldpen);
@@ -135,6 +130,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		pen[PT_THIN] = CreatePen(PS_SOLID, 1, RGB(0,0,0));
 		pen[PT_NORMAL] = CreatePen(PS_SOLID, 3, RGB(0,0,0));
 		pen[PT_THICK] = CreatePen(PS_SOLID, 5, RGB(0,0,0));
+		float sw, sh;
+		create_schematic(&sw, &sh);
+		set_canvas_size(sw, sh);
 	}
 	else if (msg == WM_DESTROY)
 	{
@@ -144,34 +142,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		PostQuitMessage(0);
 		return 1LL;
 	}
-
-	// case WM_LBUTTONDOWN:
-	// case WM_RBUTTONDOWN:
-	// case WM_MBUTTONDOWN:
-	// 	handleMousePress(0, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam), GET_KEYSTATE_WPARAM(wparam));
-	// 	break;
-
-	// case WM_LBUTTONUP:
-	// case WM_RBUTTONUP:
-	// case WM_MBUTTONUP:
-	// 	handleMouseRelease(0, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam), GET_KEYSTATE_WPARAM(wparam));
-	// 	break;
-
-	// case WM_MOUSEWHEEL:
-	// 	handleMouseWheel(0, GET_WHEEL_DELTA_WPARAM(wparam), GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam), GET_KEYSTATE_WPARAM(wparam));
-	// 	break;
-
-	// case WM_MOUSEHWHEEL:
-	// 	handleMouseWheel(GET_WHEEL_DELTA_WPARAM(wparam), 0, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam), GET_KEYSTATE_WPARAM(wparam));
-	// 	break;
-
-	// case WM_KEYDOWN:
-	// 	handleKeyPress(wparam, lparam);
-	// 	break;
-
-	// case WM_KEYUP:
-	// 	handleKeyRelease(wparam, lparam);
-	// 	break;
 
 	return DefWindowProc(hwnd, msg, wparam, lparam);
 }
@@ -199,7 +169,6 @@ int main()
 		return -1;
 	}
 
-	set_canvas_size(10.5, 8.0);
 	ShowWindow(hwnd, SW_NORMAL);
 
 	MSG msg = {0};

@@ -39,7 +39,7 @@ else
 #RM is predefined as RM = rm -f
 endif
 
-SRC+= viewport.c
+SRC+= viewport.c schematic.c
 OBJ = $(SRC:%.c=%.o)
 DEP = $(OBJ:%.o=%.d)
 

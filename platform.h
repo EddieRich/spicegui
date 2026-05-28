@@ -1,10 +1,6 @@
 #ifndef __PLATFORM__
 #define __PLATFORM__
 
-/*
- * This is everything common to both platforms
- */
-
 typedef enum ePenThickness
 {
 	PT_THIN,
