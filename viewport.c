@@ -1,22 +1,36 @@
 #include "viewport.h"
 
-static t_Viewport viewport = {0};
+static struct
+{
+	int client_width;
+	int client_height;
+	float canvas_width;
+	float canvas_height;
+	int canvas_client_x;
+	int canvas_client_y;
+	float zoom;							// zoom factor, 0 is unset, minimum is 1.0
+	float scale;						// scale factor based on client, canvas, zoom
+} vp = {0};
+
 static const float zoom_scale = 1.4142135;
 
 static void calculate_layout(void)
 {
-	float hscale = viewport.zoom * viewport.client_width / viewport.canvas_width;
-	float vscale = viewport.zoom * viewport.client_height / viewport.canvas_height;
-	viewport.scale = (hscale > vscale) ? vscale : hscale;
-	viewport.canvas_client_x = (viewport.client_width - (int)(viewport.canvas_width * viewport.scale)) >> 1;
-	viewport.canvas_client_y = (viewport.client_height - (int)(viewport.canvas_height * viewport.scale)) >> 1;
+	if (vp.zoom < 0.5)
+		vp.zoom = 1.0;
+
+	float hscale = vp.zoom * vp.client_width / vp.canvas_width;
+	float vscale = vp.zoom * vp.client_height / vp.canvas_height;
+	vp.scale = (hscale > vscale) ? vscale : hscale;
+	vp.canvas_client_x = (vp.client_width - (int)(vp.canvas_width * vp.scale)) >> 1;
+	vp.canvas_client_y = (vp.client_height - (int)(vp.canvas_height * vp.scale)) >> 1;
 }
 
 int set_viewport_window(int width, int height)
 {
-	viewport.client_width = width;
-	viewport.client_height = height;
-	if (viewport.canvas_width > 0.0 && viewport.canvas_height > 0.0)
+	vp.client_width = width;
+	vp.client_height = height;
+	if (vp.canvas_width > 0.0 && vp.canvas_height > 0.0)
 	{
 		calculate_layout();
 		return 1;
@@ -27,11 +41,10 @@ int set_viewport_window(int width, int height)
 
 int set_canvas_size(float width, float height)
 {
-	viewport.canvas_width = width;
-	viewport.canvas_height = height;
-	if (viewport.client_width && viewport.client_height && viewport.zoom < 0.5)
+	vp.canvas_width = width;
+	vp.canvas_height = height;
+	if (vp.client_width && vp.client_height)
 	{
-		viewport.zoom = 1.0;
 		calculate_layout();
 		return 1;
 	}
@@ -41,38 +54,38 @@ int set_canvas_size(float width, float height)
 
 float canvas_width()
 {
-	return viewport.canvas_width;
+	return vp.canvas_width;
 }
 
 float canvas_height()
 {
-	return viewport.canvas_height;
+	return vp.canvas_height;
 }
 
 int client_x(float x)
 {
-	return viewport.canvas_client_x + (x * viewport.scale);
+	return vp.canvas_client_x + (x * vp.scale);
 }
 
 int client_y(float y)
 {
-	return viewport.canvas_client_y + (y * viewport.scale);
+	return vp.canvas_client_y + (y * vp.scale);
 }
 
 int client_size(float sz)
 {
-	return sz * viewport.scale;
+	return sz * vp.scale;
 }
 
 int point_in_window(int x, int y)
 {
-	return (x >= 0 && y >= 0 && x < viewport.client_width && y < viewport.client_height);
+	return (x >= 0 && y >= 0 && x < vp.client_width && y < vp.client_height);
 }
 
 void zoom_in_at(int cursor_x, int cursor_y)
 {
 	(void)cursor_x;
 	(void)cursor_y;
-	viewport.zoom *= zoom_scale;
+	vp.zoom *= zoom_scale;
 	calculate_layout();
 }
