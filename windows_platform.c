@@ -67,10 +67,10 @@ void DrawArc(float center_x, float center_y, float a, float b, float start_angle
 	int x2 = client_x(center_x + a / 2.0f);
 	int y2 = client_y(center_y + b / 2.0f);
 	float fsin, fcos;
-	sincosf(start_angle, &fsin, &fcos);
+	sincosf(deg2rad(start_angle), &fsin, &fcos);
 	int x3 = client_x(center_x + fcos * a);
 	int y3 = client_y(center_y - fsin * b);
-	sincosf(end_angle, &fsin, &fcos);
+	sincosf(deg2rad(end_angle), &fsin, &fcos);
 	int x4 = client_x(center_x + fcos * a);
 	int y4 = client_y(center_y - fsin * b);
 

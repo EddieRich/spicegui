@@ -4,6 +4,7 @@
 
 #include "platform.h"
 #include "viewport.h"
+#include "schematic.h"
 
 static Display* display;
 static Window window;
@@ -51,13 +52,12 @@ void DrawLine(float x1, float y1, float x2, float y2, PenThickness pt)
 
 void DrawArc(float center_x, float center_y, float a, float b, float start_angle, float end_angle, PenThickness pt)
 {
-	int x1 = client_x(center_x - a / 2.0f);
-	int y1 = client_y(center_y - b / 2.0f);
-	int x2 = client_x(center_x + a / 2.0f);
-	int y2 = client_y(center_y + b / 2.0f);
+	int x = client_x(center_x - a / 2.0f);
+	int y = client_y(center_y - b / 2.0f);
+	int w = client_size(a);
+	int h = client_size(b);
 	int start = (int)(start_angle * 64);
 	int sweep = (int)((end_angle - start_angle) * 64);
-
 
 	if (pt != last_pt)
 	{
@@ -65,7 +65,7 @@ void DrawArc(float center_x, float center_y, float a, float b, float start_angle
 		XSetLineAttributes(display, gc, pt * 2 + 1, LineSolid, CapRound, JoinRound);
 	}
 
-	XDrawArc(display, window, gc, x1, y1, x2 - x1, y2 - y1, start, sweep);
+	XDrawArc(display, window, gc, x, y, w, h, start, sweep);
 }
 
 void create_window(int width, int height, const char* title)
@@ -113,16 +113,17 @@ int update_window()
 		XSetForeground(display, gc, 0xFFFFFF);
 		FillRectangle(0.0, 0.0, canvas_width(), canvas_height());
 		XSetForeground(display, gc, 0);
-		DrawRectangle(2.0, 2.0, 3.0, 3.0, PT_THIN);
-		DrawCircle(2.5, 2.5, 0.25, PT_NORMAL);
-		DrawLine(1.0, 1.0, 9.5, 1.0, PT_THICK);
-		DrawArc(5, 5, 2, 2, 45, 135, PT_NORMAL);
+
+		render_schematic();
+
 		return 1;
 	}
 	else if (event.type == ConfigureNotify)
 	{
 		set_viewport_window(event.xconfigure.width, event.xconfigure.height);
-		set_canvas_size(10.5, 8.0);
+		float sw, sh;
+		create_schematic(&sw, &sh);
+		set_canvas_size(sw, sh);
 
 		return 1;
 	}
