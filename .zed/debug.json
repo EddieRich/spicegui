@@ -1,0 +1,26 @@
+[
+	{
+    "label": "Windows Debug with GDB",
+    "adapter": "GDB",
+    "request": "launch",
+    "program": "spicegui.exe",
+    "cwd": "C:\\Users\\ehandrich\\MyProjects\\spicegui",
+    "build": "Build Debug"
+  },
+	{
+    "label": "Windows Debug with LLDB",
+    "adapter": "CodeLLDB",
+    "request": "launch",
+    "program": "spicegui.exe",
+    "cwd": "C:\\Users\\ehandrich\\MyProjects\\spicegui",
+    "build": "Build Debug"
+  },
+  {
+    "label": "Linux Debug with GDB",
+    "adapter": "GDB",
+    "request": "launch",
+    "program": "./spicegui",
+    "cwd": "",
+    "build": "Build Debug"
+  }
+]
