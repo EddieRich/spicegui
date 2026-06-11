@@ -5,11 +5,11 @@ SRC=$(wildcard *.c)
 OBJ=$(SRC:%.c=%.o)
 DEP=$(OBJ:%.o=%.d)
 
-#EXE=???
+EXE=spicegui
 
 # add any additional libraries here ...
 # $(addprefix -l, m pthread GL)
-LIBS=$(addprefix -l,)
+LIBS=$(addprefix -l, raylib GL m pthread dl rt X11)
 
 .PHONY: clean
 
