@@ -13,7 +13,7 @@ LIBS=$(addprefix -l, raylib GL m pthread dl rt X11)
 
 .PHONY: clean
 
-debug: CFLAGS += -ggdb
+debug: CFLAGS += -O0 -g -gdwarf
 debug: $(EXE)
 
 remake: clean debug
@@ -30,6 +30,6 @@ install: release
 	sudo cp $(EXE) /usr/local/bin/$(EXE)
 
 $(EXE): $(OBJ)
-	gcc -o $@ $^ $(LIBS)
+	clang -o $@ $^ $(LIBS)
 
 -include $(DEP)
