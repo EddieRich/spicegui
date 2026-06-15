@@ -1,6 +1,6 @@
 # CFLAGS is not defined by default
 CFLAGS=-MMD -Wall -Wextra -Werror -Wno-unused-result -Wno-unused-parameter -Wno-unused-variable -Wno-format-overflow -std=c17 -march=x86-64 -fdiagnostics-color=always
-
+CC=clang
 SRC=$(wildcard *.c)
 OBJ=$(SRC:%.c=%.o)
 DEP=$(OBJ:%.o=%.d)
@@ -19,7 +19,7 @@ debug: $(EXE)
 remake: clean debug
 .NOTPARALLEL: remake
 
-release: CFLAGS += -Os -s -fno-ident -fno-asynchronous-unwind-tables -faggressive-loop-optimizations
+release: CFLAGS += -Os
 release: clean $(EXE)
 .NOTPARALLEL: release
 

@@ -2,20 +2,25 @@
 //
 // Example:
 [
-	{
-		"label": "Build Debug",
-		"command": "make -j4 debug",
-		"use_new_terminal": false,
-		"allow_concurrent_runs": false,
-		"reveal": "never",
-		"hide": "on_success",
-	},
-	{
-		"label": "Clean",
-		"command": "make clean",
-		"use_new_terminal": false,
-		"allow_concurrent_runs": false,
-		"reveal": "never",
-		"hide": "on_success",
-	},
+  {
+    "label": "Build Debug",
+    "command": "make -j4 debug",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "hide": "on_success",
+  },
+  {
+    "label": "Clean",
+    "command": "make clean",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "hide": "on_success",
+  },
+  {
+    "label": "Build And Run",
+    "command": "make release && ./spicegui",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "hide": "on_success",
+  },
 ]

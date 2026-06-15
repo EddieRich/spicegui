@@ -1,10 +1,10 @@
 [
-	{
-		"label": "Linux Debug with GDB",
-		"adapter": "GDB",
-		"request": "launch",
-		"program": "./spicegui",
-		"cwd": "",
-		"build": "Build Debug",
-	},
+  {
+    "label": "Linux Debug with LLDB",
+    "adapter": "CodeLLDB",
+    "request": "launch",
+    "program": "./spicegui",
+    "cwd": "",
+    "build": "Build Debug",
+  },
 ]

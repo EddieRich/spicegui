@@ -2,32 +2,23 @@
 
 int main(void)
 {
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+	const int screenWidth = 800;
+	const int screenHeight = 450;
 
-    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
-    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+	SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+	InitWindow(screenWidth, screenHeight, "Spice GUI");
+	SetTargetFPS(60);
 
-    while (!WindowShouldClose())    // Detect window close button or ESC key
-    {
-        // Update
-        //----------------------------------------------------------------------------------
-        // TODO: Update your variables here
-        //----------------------------------------------------------------------------------
+	while (!WindowShouldClose()) {
+		BeginDrawing();
 
-        // Draw
-        //----------------------------------------------------------------------------------
-        BeginDrawing();
+		ClearBackground(WHITE);
 
-            ClearBackground(WHITE);
+		DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
 
-            DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
+		EndDrawing();
+	}
 
-        EndDrawing();
-        //----------------------------------------------------------------------------------
-    }
-
-    CloseWindow();        // Close window and OpenGL context
-    return 0;
+	CloseWindow(); // Close window and OpenGL context
+	return 0;
 }
