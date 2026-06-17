@@ -1,0 +1,9 @@
+CompileFlags:
+  Add:
+    - -xc
+    - -include
+    - "X11/Xlib.h"
+    - -std=c17
+    - -Wall
+    - -Wextra
+    - -DDEBUG

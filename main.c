@@ -37,23 +37,21 @@ typedef struct {
 	float zoom;
 } Camera2D;
 
-// color utils
-
 // Converts a raw World location to exact Screen Pixel offsets
-void WorldToScreen(Camera2D cam, float wx, float wy, int *sx, int *sy)
+void world_to_screen(Camera2D cam, float wx, float wy, int *sx, int *sy)
 {
 	*sx = (int)((wx - cam.targetX) * cam.zoom + cam.offsetX);
 	*sy = (int)((wy - cam.targetY) * cam.zoom + cam.offsetY);
 }
 
 // Converts raw Screen Coordinates back into infinite World Coordinates
-void ScreenToWorld(Camera2D cam, int sx, int sy, float *wx, float *wy)
+void screen_to_world(Camera2D cam, int sx, int sy, float *wx, float *wy)
 {
 	*wx = ((float)sx - cam.offsetX) / cam.zoom + cam.targetX;
 	*wy = ((float)sy - cam.offsetY) / cam.zoom + cam.targetY;
 }
 
-float SnapValue(float value, float snapSize)
+float snap_value(float value, float snapSize)
 {
 	return roundf(value / snapSize) * snapSize;
 }
@@ -76,14 +74,15 @@ int main()
 	XSelectInput(app.display, app.window,
 							 ExposureMask | StructureNotifyMask | PointerMotionMask | ButtonPressMask | ButtonReleaseMask |
 								 KeyPressMask | KeyReleaseMask);
+	XStoreName(app.display, app.window, "Spice GUI");
 	XMapWindow(app.display, app.window);
 
 	app.gc = XCreateGC(app.display, app.window, 0, NULL);
-	unsigned long colorWhite = WhitePixel(app.display, app.screen);
-	unsigned long colorDarkGray = get_rgb_color(app.display, app.screen, 0x28, 0x28, 0x28);
-	unsigned long colorRed = get_named_color(app.display, app.screen, "red");
-	unsigned long colorGreen = get_named_color(app.display, app.screen, "green");
-	unsigned long colorBlue = get_named_color(app.display, app.screen, "blue");
+	unsigned long color_white = WhitePixel(app.display, app.screen);
+	unsigned long color_dark_gray = get_rgb_color(app.display, app.screen, 0x28, 0x28, 0x28);
+	unsigned long color_red = get_named_color(app.display, app.screen, "red");
+	unsigned long color_green = get_named_color(app.display, app.screen, "green");
+	unsigned long color_blue = get_named_color(app.display, app.screen, "blue");
 
 	app.color_depth = DefaultDepth(app.display, app.screen);
 	app.backbuffer = XCreatePixmap(app.display, app.window, app.screen_width, app.screen_height, app.color_depth);
@@ -93,22 +92,22 @@ int main()
 	camera.offsetY = app.screen_height / 2.0f;
 
 	Entity entities[MAX_ENTITIES];
-	int entityCount = 0;
+	int entity_count = 0;
 
-	bool isDrawing = false;
-	float lineStartWorldX = 0, lineStartWorldY = 0;
-	bool snapEnabled = true;
+	bool is_drawing = false;
+	float line_start_world_x = 0, line_start_world_y = 0;
+	bool snap_enabled = true;
 
-	int lastMouseX = 0, lastMouseY = 0;
-	int currentMouseX = 0, currentMouseY = 0;
-	bool ctrlPressed = false;
+	int last_mouse_x = 0, last_mouse_y = 0;
+	int current_mouse_x = 0, current_mouse_y = 0;
+	bool ctrl_pressed = false;
 
-	Atom wmDeleteMessage = XInternAtom(app.display, "WM_DELETE_WINDOW", False);
-	XSetWMProtocols(app.display, app.window, &wmDeleteMessage, 1);
+	Atom wm_delete_message = XInternAtom(app.display, "WM_DELETE_WINDOW", False);
+	XSetWMProtocols(app.display, app.window, &wm_delete_message, 1);
 
 	bool running = true;
 	while (running) {
-		bool shouldRedraw = (XPending(app.display) == 0);
+		bool should_redraw = (XPending(app.display) == 0);
 
 		while (XPending(app.display) > 0) {
 			XEvent event;
@@ -117,11 +116,11 @@ int main()
 			if (event.type == KeyPress || event.type == KeyRelease) {
 				KeySym sym = XLookupKeysym(&event.xkey, 0);
 				if (sym == XK_Control_L || sym == XK_Control_R) {
-					ctrlPressed = (event.type == KeyPress);
+					ctrl_pressed = (event.type == KeyPress);
 				}
 				if (event.type == KeyPress && sym == XK_s) {
-					snapEnabled = !snapEnabled;
-					shouldRedraw = true;
+					snap_enabled = !snap_enabled;
+					should_redraw = true;
 				}
 			}
 
@@ -134,163 +133,163 @@ int main()
 					app.backbuffer = XCreatePixmap(app.display, app.window, app.screen_width, app.screen_height, app.color_depth);
 					camera.offsetX = app.screen_width / 2.0f;
 					camera.offsetY = app.screen_height / 2.0f;
-					shouldRedraw = true;
+					should_redraw = true;
 				}
 				break;
 
 			case MotionNotify:
-				currentMouseX = event.xmotion.x;
-				currentMouseY = event.xmotion.y;
-				if (ctrlPressed && (event.xmotion.state & Button1Mask)) {
-					int dx = currentMouseX - lastMouseX;
-					int dy = currentMouseY - lastMouseY;
+				current_mouse_x = event.xmotion.x;
+				current_mouse_y = event.xmotion.y;
+				if (ctrl_pressed && (event.xmotion.state & Button1Mask)) {
+					int dx = current_mouse_x - last_mouse_x;
+					int dy = current_mouse_y - last_mouse_y;
 					camera.targetX -= (float)dx / camera.zoom;
 					camera.targetY -= (float)dy / camera.zoom;
 				}
-				lastMouseX = currentMouseX;
-				lastMouseY = currentMouseY;
-				shouldRedraw = true;
+				last_mouse_x = current_mouse_x;
+				last_mouse_y = current_mouse_y;
+				should_redraw = true;
 				break;
 
 			case ButtonPress:
-				currentMouseX = event.xbutton.x;
-				currentMouseY = event.xbutton.y;
+				current_mouse_x = event.xbutton.x;
+				current_mouse_y = event.xbutton.y;
 				if (event.xbutton.button == Button4) {
 					float wx, wy;
-					ScreenToWorld(camera, currentMouseX, currentMouseY, &wx, &wy);
+					screen_to_world(camera, current_mouse_x, current_mouse_y, &wx, &wy);
 					camera.zoom *= 1.1f;
 					if (camera.zoom > 10.0f)
 						camera.zoom = 10.0f;
-					camera.offsetX = currentMouseX;
-					camera.offsetY = currentMouseY;
+					camera.offsetX = current_mouse_x;
+					camera.offsetY = current_mouse_y;
 					camera.targetX = wx;
 					camera.targetY = wy;
-					shouldRedraw = true;
+					should_redraw = true;
 				} else if (event.xbutton.button == Button5) {
 					float wx, wy;
-					ScreenToWorld(camera, currentMouseX, currentMouseY, &wx, &wy);
+					screen_to_world(camera, current_mouse_x, current_mouse_y, &wx, &wy);
 					camera.zoom /= 1.1f;
 					if (camera.zoom < 0.1f)
 						camera.zoom = 0.1f;
-					camera.offsetX = currentMouseX;
-					camera.offsetY = currentMouseY;
+					camera.offsetX = current_mouse_x;
+					camera.offsetY = current_mouse_y;
 					camera.targetX = wx;
 					camera.targetY = wy;
-					shouldRedraw = true;
-				} else if (event.xbutton.button == Button1 && !ctrlPressed) {
+					should_redraw = true;
+				} else if (event.xbutton.button == Button1 && !ctrl_pressed) {
 					float wx, wy;
-					ScreenToWorld(camera, currentMouseX, currentMouseY, &wx, &wy);
-					if (snapEnabled) {
-						wx = SnapValue(wx, SNAP_SIZE);
-						wy = SnapValue(wy, SNAP_SIZE);
+					screen_to_world(camera, current_mouse_x, current_mouse_y, &wx, &wy);
+					if (snap_enabled) {
+						wx = snap_value(wx, SNAP_SIZE);
+						wy = snap_value(wy, SNAP_SIZE);
 					}
-					if (!isDrawing) {
-						lineStartWorldX = wx;
-						lineStartWorldY = wy;
-						isDrawing = true;
+					if (!is_drawing) {
+						line_start_world_x = wx;
+						line_start_world_y = wy;
+						is_drawing = true;
 					} else {
-						if (entityCount < MAX_ENTITIES) {
-							entities[entityCount] = (Entity){
-								.type = SHAPE_LINE, .startX = lineStartWorldX, .startY = lineStartWorldY, .endX = wx, .endY = wy
+						if (entity_count < MAX_ENTITIES) {
+							entities[entity_count] = (Entity){
+								.type = SHAPE_LINE, .startX = line_start_world_x, .startY = line_start_world_y, .endX = wx, .endY = wy
 							};
-							entityCount++;
+							entity_count++;
 						}
-						isDrawing = false;
+						is_drawing = false;
 					}
-					shouldRedraw = true;
-				} else if (event.xbutton.button == Button3 && isDrawing) {
-					isDrawing = false;
-					shouldRedraw = true;
+					should_redraw = true;
+				} else if (event.xbutton.button == Button3 && is_drawing) {
+					is_drawing = false;
+					should_redraw = true;
 				}
-				lastMouseX = currentMouseX;
-				lastMouseY = currentMouseY;
+				last_mouse_x = current_mouse_x;
+				last_mouse_y = current_mouse_y;
 				break;
 
 			case ClientMessage:
 				// FIX: Explicitly target index [0] of the long data payload array
-				if ((Atom)event.xclient.data.l[0] == wmDeleteMessage) {
+				if ((Atom)event.xclient.data.l[0] == wm_delete_message) {
 					running = false;
 				}
 				break;
 
 			case Expose:
-				shouldRedraw = true;
+				should_redraw = true;
 				break;
 			}
 		}
 
-		if (shouldRedraw) {
+		if (should_redraw) {
 			XSetForeground(app.display, app.gc, 0x181818);
 			XFillRectangle(app.display, app.backbuffer, app.gc, 0, 0, app.screen_width, app.screen_height);
 
-			float wTLX, wTLY, wBRX, wBRY;
-			ScreenToWorld(camera, 0, 0, &wTLX, &wTLY);
-			ScreenToWorld(camera, app.screen_width, app.screen_height, &wBRX, &wBRY);
+			float w_tlx, w_tly, w_brx, w_bry;
+			screen_to_world(camera, 0, 0, &w_tlx, &w_tly);
+			screen_to_world(camera, app.screen_width, app.screen_height, &w_brx, &w_bry);
 
-			float startX = floorf(wTLX / GRID_SIZE) * GRID_SIZE;
-			float endX = ceilf(wBRX / GRID_SIZE) * GRID_SIZE;
-			float startY = floorf(wTLY / GRID_SIZE) * GRID_SIZE;
-			float endY = ceilf(wBRY / GRID_SIZE) * GRID_SIZE;
+			float start_x = floorf(w_tlx / GRID_SIZE) * GRID_SIZE;
+			float end_x = ceilf(w_brx / GRID_SIZE) * GRID_SIZE;
+			float start_y = floorf(w_tly / GRID_SIZE) * GRID_SIZE;
+			float end_y = ceilf(w_bry / GRID_SIZE) * GRID_SIZE;
 
-			XSetForeground(app.display, app.gc, colorDarkGray);
-			for (float x = startX; x <= endX; x += GRID_SIZE) {
+			XSetForeground(app.display, app.gc, color_dark_gray);
+			for (float x = start_x; x <= end_x; x += GRID_SIZE) {
 				int sx1, sy1, sx2, sy2;
-				WorldToScreen(camera, x, startY, &sx1, &sy1);
-				WorldToScreen(camera, x, endY, &sx2, &sy2);
+				world_to_screen(camera, x, start_y, &sx1, &sy1);
+				world_to_screen(camera, x, end_y, &sx2, &sy2);
 				XDrawLine(app.display, app.backbuffer, app.gc, sx1, sy1, sx2, sy2);
 			}
-			for (float y = startY; y <= endY; y += GRID_SIZE) {
+			for (float y = start_y; y <= end_y; y += GRID_SIZE) {
 				int sx1, sy1, sx2, sy2;
-				WorldToScreen(camera, startX, y, &sx1, &sy1);
-				WorldToScreen(camera, endX, y, &sx2, &sy2);
+				world_to_screen(camera, start_x, y, &sx1, &sy1);
+				world_to_screen(camera, end_x, y, &sx2, &sy2);
 				XDrawLine(app.display, app.backbuffer, app.gc, sx1, sy1, sx2, sy2);
 			}
 
-			XSetForeground(app.display, app.gc, colorWhite);
-			for (int i = 0; i < entityCount; i++) {
+			XSetForeground(app.display, app.gc, color_white);
+			for (int i = 0; i < entity_count; i++) {
 				if (entities[i].type == SHAPE_LINE) {
 					int sx1, sy1, sx2, sy2;
-					WorldToScreen(camera, entities[i].startX, entities[i].startY, &sx1, &sy1);
-					WorldToScreen(camera, entities[i].endX, entities[i].endY, &sx2, &sy2);
-					int lineWidth = (int)roundf(2.0f * camera.zoom);
-					if (lineWidth < 1)
-						lineWidth = 1;
-					XSetLineAttributes(app.display, app.gc, lineWidth, LineSolid, CapRound, JoinRound);
+					world_to_screen(camera, entities[i].startX, entities[i].startY, &sx1, &sy1);
+					world_to_screen(camera, entities[i].endX, entities[i].endY, &sx2, &sy2);
+					int line_width = (int)roundf(2.0f * camera.zoom);
+					if (line_width < 1)
+						line_width = 1;
+					XSetLineAttributes(app.display, app.gc, line_width, LineSolid, CapRound, JoinRound);
 					XDrawLine(app.display, app.backbuffer, app.gc, sx1, sy1, sx2, sy2);
 				}
 			}
 			XSetLineAttributes(app.display, app.gc, 1, LineSolid, CapRound, JoinRound);
 
-			float cmWX, cmWY;
-			ScreenToWorld(camera, currentMouseX, currentMouseY, &cmWX, &cmWY);
-			if (snapEnabled) {
-				cmWX = SnapValue(cmWX, SNAP_SIZE);
-				cmWY = SnapValue(cmWY, SNAP_SIZE);
+			float cm_wx, cm_wy;
+			screen_to_world(camera, current_mouse_x, current_mouse_y, &cm_wx, &cm_wy);
+			if (snap_enabled) {
+				cm_wx = snap_value(cm_wx, SNAP_SIZE);
+				cm_wy = snap_value(cm_wy, SNAP_SIZE);
 			}
 
-			int targetScreenX, targetScreenY;
-			WorldToScreen(camera, cmWX, cmWY, &targetScreenX, &targetScreenY);
+			int target_screen_x, target_screen_y;
+			world_to_screen(camera, cm_wx, cm_wy, &target_screen_x, &target_screen_y);
 
-			if (isDrawing) {
+			if (is_drawing) {
 				int sx1, sy1;
-				WorldToScreen(camera, lineStartWorldX, lineStartWorldY, &sx1, &sy1);
-				XSetForeground(app.display, app.gc, colorRed);
-				XDrawLine(app.display, app.backbuffer, app.gc, sx1, sy1, targetScreenX, targetScreenY);
+				world_to_screen(camera, line_start_world_x, line_start_world_y, &sx1, &sy1);
+				XSetForeground(app.display, app.gc, color_red);
+				XDrawLine(app.display, app.backbuffer, app.gc, sx1, sy1, target_screen_x, target_screen_y);
 			}
 
-			XSetForeground(app.display, app.gc, snapEnabled ? colorGreen : colorBlue);
-			XFillArc(app.display, app.backbuffer, app.gc, targetScreenX - 4, targetScreenY - 4, 8, 8, 0, 360 * 64);
+			XSetForeground(app.display, app.gc, snap_enabled ? color_green : color_blue);
+			XFillArc(app.display, app.backbuffer, app.gc, target_screen_x - 4, target_screen_y - 4, 8, 8, 0, 360 * 64);
 
-			XSetForeground(app.display, app.gc, colorWhite);
-			char hudTop[256];
-			char hudBottom[256];
+			XSetForeground(app.display, app.gc, color_white);
+			char hud_top[256];
+			char hud_bottom[256];
 
-			snprintf(hudTop, sizeof(hudTop), "Controls: Ctrl+Left Drag=Pan | Scroll=Zoom | S=Toggle Snap (%s)",
-							 snapEnabled ? "ON" : "OFF");
-			XDrawString(app.display, app.backbuffer, app.gc, 15, 25, hudTop, strlen(hudTop));
+			snprintf(hud_top, sizeof(hud_top), "Controls: Ctrl+Left Drag=Pan | Scroll=Zoom | S=Toggle Snap (%s)",
+							 snap_enabled ? "ON" : "OFF");
+			XDrawString(app.display, app.backbuffer, app.gc, 15, 25, hud_top, strlen(hud_top));
 
-			snprintf(hudBottom, sizeof(hudBottom), "World Pos: X: %.1f, Y: %.1f", cmWX, cmWY);
-			XDrawString(app.display, app.backbuffer, app.gc, 15, app.screen_height - 20, hudBottom, strlen(hudBottom));
+			snprintf(hud_bottom, sizeof(hud_bottom), "World Pos: X: %.1f, Y: %.1f", cm_wx, cm_wy);
+			XDrawString(app.display, app.backbuffer, app.gc, 15, app.screen_height - 20, hud_bottom, strlen(hud_bottom));
 
 			XCopyArea(app.display, app.backbuffer, app.window, app.gc, 0, 0, app.screen_width, app.screen_height, 0, 0);
 			XFlush(app.display);
